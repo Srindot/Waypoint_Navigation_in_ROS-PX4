@@ -45,8 +45,8 @@
     "mounts": [
         {
             "type": "bind",
-            "source": "/home/${localEnv:USER}/.vscode",
-            "target": "/home/remoteUser.vscode"
+            "source": "${localWorkspaceFolder}/.vscode",
+            "target": "${containerWorkspaceFolder}/.vscode"
         }
     ]
 }
