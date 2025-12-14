@@ -2,7 +2,7 @@
     "name": "WSL | Introduction to UAV Assignment 2 Q2",
     "privileged": true,
     "remoteUser": "rosusr",
-    "image":"ghcr.io/srindot/rosgzpx4",
+    "image": "ghcr.io/srindot/rosgzpx4",
     "workspaceFolder": "/home/rosusr/workspace",
     "workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/home/rosusr/workspace",
     "customizations": {
@@ -13,39 +13,36 @@
                 "esbenp.prettier-vscode",
                 "eamodio.gitlens",
                 "ms-iot.vscode-ros",
-                "ms-toolsai.jupyter",              
-                "mechatroner.rainbow-csv",         
-                "ms-azuretools.vscode-docker",     
-                "twxs.cmake",                      
-                "ms-vscode.cmake-tools",          
-                "redhat.vscode-yaml",             
-                "smilerobotics.urdf",             
-                "betwo.b2-catkin-tools",          
-                "zachflower.uncrustify",          
-                "ms-python.vscode-pylance" 
+                "ms-toolsai.jupyter",
+                "mechatroner.rainbow-csv",
+                "ms-azuretools.vscode-docker",
+                "twxs.cmake",
+                "ms-vscode.cmake-tools",
+                "redhat.vscode-yaml",
+                "smilerobotics.urdf",
+                "betwo.b2-catkin-tools",
+                "zachflower.uncrustify",
+                "ms-python.vscode-pylance"
             ]
         }
     },
     "containerEnv": {
         "DISPLAY": ":0",
         "QT_QPA_PLATFORM": "xcb",
-        "NVIDIA_DRIVER_CAPABILITIES": "all", // Remove this Lines If you don't have a Nvida Card
-        "NVIDIA_VISIBLE_DEVICES": "all"      // Remove this Lines If you don't have a Nvida Card
+        "NVIDIA_DRIVER_CAPABILITIES": "all",
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "LD_LIBRARY_PATH": "/usr/lib/wsl/lib",
+        "MESA_D3D12_DEFAULT_ADAPTER_NAME": "NVIDIA"
     },
     "runArgs": [
         "--gpus=all",
         "--privileged",
-        "--net=host", 
-
-        // --- WSL2 CRITICAL FIXES (YOU WERE MISSING THESE) ---
+        "--net=host",
         "--device=/dev/dxg",
         "-v", "/usr/lib/wsl:/usr/lib/wsl",
         "-v", "/mnt/wslg:/mnt/wslg",
-        "-e", "LD_LIBRARY_PATH=/usr/lib/wsl/lib",
         "-e", "WAYLAND_DISPLAY=$WAYLAND_DISPLAY",
         "-e", "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR",
-        // ----------------------------------------------------
-
         "-e", "DISPLAY=${localEnv:DISPLAY}",
         "-e", "QT_QPA_PLATFORM=xcb",
         "--volume=/tmp/.X11-unix:/tmp/.X11-unix"
