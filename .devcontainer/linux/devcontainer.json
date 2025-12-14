@@ -1,5 +1,5 @@
 {
-    "name": "Introduction to UAV Assignment 2 Q2",
+    "name": "Linux | Introduction to UAV Assignment 2 Q2",
     "privileged": true,
     "remoteUser": "rosusr",
     "image":"ghcr.io/srindot/rosgzpx4",
