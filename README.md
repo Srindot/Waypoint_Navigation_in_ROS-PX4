@@ -120,56 +120,9 @@ docker pull ghcr.io/srindot/rosgzpx4
 
 This is going to take some time.
 
- Create a container instance from the pulled image with the name as **myros**:
+ Create a container instance from the pulled image refer to this [repo](https://github.com/Srindot/docker-dev-for-ros.git) for instructions
 
-```bash
-xhost +local:docker && docker run -it \
-  --name myros \
-  --privileged \
-  --user rosusr \
-  -e DISPLAY=$DISPLAY \
-  -e PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native \
-  --volume=/run/user/$(id -u)/pulse/native:/run/user/$(id -u)/pulse/native \
-  --device /dev/snd \
-  --group-add audio \
-  --net=host \
-  --volume /tmp/.X11-unix:/tmp/.X11-unix \
-  --volume /home/$(whoami)/.Xauthority:/root/.Xauthority:ro \
-  ghcr.io/srindot/rosgzpx4:latest
-
-```
-
-After this command, the container opens up automatically in /bin/bash.
-
-To exit the container :
-
-```bash
-exit
-```
-
-To stop the container :
-
-```bash
-docker stop myros
-```
-
-To start the contianer:
-
-```bash
-docker start myros
-```
-
-To re enter a container:
-
-```bash
-docker exec -it myros /bin/bash
-```
-
-To delete the container instance:
-
-```bash
-docker rm -f myros
-```
+To run the simulator follow below steps.
 
 1. To launch **MicroXRCEAgent**: Navigate to a new terminal and run the below command to launch it
 
