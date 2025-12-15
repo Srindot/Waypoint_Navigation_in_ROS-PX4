@@ -13,6 +13,11 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /home/rosusr
 
+# --- FIX START ---
+# Refresh the expired ROS GPG Key before updating
+RUN wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O /usr/share/keyrings/ros-archive-keyring.gpg
+# --- FIX END ---
+
 # Update packages and install required dependencies
 RUN apt-get update && apt-get install -y \
     ros-humble-ros-gzharmonic \
