@@ -46,5 +46,8 @@ RUN mkdir -p /home/rosusr/ws_offboard_control/src && \
 
 RUN pip install git+https://github.com/fishros/ros2bag_convert.git
 
+# Switch back to the non-root user 
+USER rosusr
+
 # Set the default command to open a bash shell
 CMD ["bash"]
