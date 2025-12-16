@@ -21,7 +21,7 @@ class OffboardControl(Node):
             depth=1
         )
 
-        # Create publishers
+        # Create publishers (Inputs to PX4 do NOT usually have _v1)
         self.offboard_control_mode_publisher = self.create_publisher(
             OffboardControlMode, '/fmu/in/offboard_control_mode', qos_profile)
         self.trajectory_setpoint_publisher = self.create_publisher(
@@ -29,20 +29,25 @@ class OffboardControl(Node):
         self.vehicle_command_publisher = self.create_publisher(
             VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
         
-        # Create subscribers
+        # Create subscribers (Outputs from PX4 DO have _v1 in your version)
         self.vehicle_local_position_subscriber = self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.vehicle_local_position_callback, qos_profile)
+            VehicleLocalPosition, 
+            '/fmu/out/vehicle_local_position_v1', # <--- FIXED
+            self.vehicle_local_position_callback, 
+            qos_profile)
         self.vehicle_status_subscriber = self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status', self.vehicle_status_callback, qos_profile)
+            VehicleStatus, 
+            '/fmu/out/vehicle_status_v1',         # <--- FIXED
+            self.vehicle_status_callback, 
+            qos_profile)
 
-
+        # Initialize variables to prevent startup crashes
+        self.vehicle_local_position = VehicleLocalPosition()
+        self.vehicle_status = VehicleStatus()
 
         # Set Waypoints
-        # --------------------------------------------------------------------------------------------------------------------
         self.waypoints = [[0.0, 0.0, -5.0], [30.0, 100.0, -5.0], [20.0, -30.0, -5.0], [0.0, 0.0, -5.0]]
-        # --------------------------------------------------------------------------------------------------------------------
         
-        # Initialize variables
         self.waypoint = self.waypoints[0]
         self.offboard_setpoint_counter = 0
         
@@ -69,7 +74,7 @@ class OffboardControl(Node):
         x = vehicle_local_position.x
         y = vehicle_local_position.y
         z = vehicle_local_position.z
-        self.get_logger().info(f"Vehicle Position: x={x}, y={y}, z={z}")
+        # self.get_logger().info(f"Vehicle Position: x={x:.2f}, y={y:.2f}, z={z:.2f}")
 
     def vehicle_status_callback(self, vehicle_status):
         """Callback function for vehicle_status topic subscriber."""
@@ -93,13 +98,11 @@ class OffboardControl(Node):
 
     def publish_trajectory_setpoint(self):
         """Publish the trajectory setpoint."""
-        
         msg = TrajectorySetpoint()
-        msg.position = self.waypoint # Hover at 5m altitude
-        msg.yaw = 0.0 # 0 degrees yaw
+        msg.position = self.waypoint 
+        msg.yaw = 0.0 
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.trajectory_setpoint_publisher.publish(msg)
-        self.get_logger().info("Publishing trajectory setpoint: Hover at 5m")
 
     def publish_vehicle_command(self, command, **params) -> None:
         """Publish a vehicle command."""
@@ -117,7 +120,6 @@ class OffboardControl(Node):
 
     def timer_callback(self) -> None:
         """Callback function for the timer."""
-        self.change_waypoint()
         self.publish_offboard_control_mode()
         self.publish_trajectory_setpoint()
 
@@ -127,49 +129,48 @@ class OffboardControl(Node):
 
         if self.offboard_setpoint_counter < 11:
             self.offboard_setpoint_counter += 1
+            
+        self.change_waypoint()
 
     def change_waypoint(self):
         """Change the waypoint to a new position."""
         if self.check_pos():
-            # don't increament the waypoint_change_counter if it exceeds the length of waypoints
-            if self.waypoint_change_counter< len(self.waypoints)-1:
+            if self.waypoint_change_counter < len(self.waypoints)-1:
                 self.waypoint_change_counter += 1
                 self.waypoint = self.waypoints[self.waypoint_change_counter]
-        
-     
-
+                self.get_logger().info(f"Waypoint Reached! Moving to: {self.waypoint}")
+    
     def check_pos(self):
+        tolerance = 0.5 # Increased slightly for robustness
 
-        # Putting a tolerance of 0.2m
-        tolerence = 0.2
+        # Check if we have valid data first (avoid 0,0,0 glitches at startup)
+        if self.vehicle_local_position.timestamp == 0:
+            return False
 
-        # Check if the vehicle is within the tolerance of the waypoint
-        if (abs(self.vehicle_local_position.x - self.waypoint[0]) < tolerence and
-                abs(self.vehicle_local_position.y - self.waypoint[1]) < tolerence and
-                abs(self.vehicle_local_position.z - self.waypoint[2]) < tolerence):
+        if (abs(self.vehicle_local_position.x - self.waypoint[0]) < tolerance and
+                abs(self.vehicle_local_position.y - self.waypoint[1]) < tolerance and
+                abs(self.vehicle_local_position.z - self.waypoint[2]) < tolerance):
             
-            # Setting delay at waypoints  
             if self.delay_at_waypoint_counter < 3:
                 self.delay_at_waypoint_counter += 1
-
-            # Returning the True and setting the delay counter to 0
+                return False # Stay here
             else:
                 self.delay_at_waypoint_counter = 0
                 return True
-        
-        # Returning False if the vehicle is not within the tolerance        
         else:
             return False
-        
 
 def main(args=None) -> None:
     print('Starting offboard control node...')
     rclpy.init(args=args)
     offboard_control = OffboardControl()
-    rclpy.spin(offboard_control)
-    offboard_control.destroy_node()
-    rclpy.shutdown()
-
+    try:
+        rclpy.spin(offboard_control)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        offboard_control.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     try:
